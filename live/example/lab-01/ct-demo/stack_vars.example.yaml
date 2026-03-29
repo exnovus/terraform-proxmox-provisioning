@@ -1,0 +1,20 @@
+stack_name: ct-demo
+stack_type: ct
+stack_version: "1.0.0"
+role: ct-demo
+
+ct_groups:
+  primary:
+    enabled: true
+    role: dns
+    count: 1
+    cpu: 1
+    ram_mb: 512
+    disk_gb: 8
+    os_template: local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst
+    target_nodes: []
+    bridge: vmbr0
+    storage: local-lvm
+    ipv4: dhcp
+
+custom_tags: {}

@@ -1,0 +1,22 @@
+stack_name: vm-demo
+stack_type: vm
+stack_version: "1.0.0"
+role: vm-demo
+
+vm_groups:
+  primary:
+    enabled: true
+    role: app
+    count: 1
+    cpu: 2
+    ram_mb: 4096
+    disk_gb: 40
+    template: ubuntu-2404-cloudinit
+    template_vm_id: 9000
+    use_clone: true
+    cloud_init_set_hostname: true
+    target_nodes: []
+    bridge: vmbr0
+    storage: local-lvm
+
+custom_tags: {}

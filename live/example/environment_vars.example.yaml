@@ -1,0 +1,7 @@
+environment: dev
+client: example
+owner: example-team
+naming_delimiter: "-"
+tags:
+  Terraform: "true"
+  Owner: example-team
