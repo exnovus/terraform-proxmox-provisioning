@@ -1,0 +1,125 @@
+name: CI — Lint & Validate
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TF_INPUT: "false"
+  TF_IN_AUTOMATION: "true"
+  TERRAGRUNT_NON_INTERACTIVE: "true"
+
+  # Placeholders: validate/init NO deben requerir API real.
+  PM_API_URL: "https://pve.ci.invalid:8006/api2/json"
+  PM_USER: "ci@pam"
+  PM_PASSWORD: ""
+  PM_TLS_INSECURE: "true"
+  PROXMOX_VE_ENDPOINT: "https://pve.ci.invalid:8006/"
+
+jobs:
+  lint-and-guards:
+    name: Lint + Guardrails
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep shellcheck
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Bash syntax
+        run: bash -n scripts/*.sh
+
+      - name: Shellcheck
+        run: shellcheck -x scripts/*.sh
+
+      # Fuente de verdad: templates/envcommon (no dependas de live/_envcommon)
+      - name: Envcommon must use components only
+        run: rg -n 'source\s*=\s*".*modules//components/' templates/envcommon/
+
+      - name: Envcommon must NOT reference resources
+        run: |
+          if rg -n 'modules//resources/' templates/envcommon/ >/dev/null 2>&1; then
+            echo "FAIL: envcommon references resources"
+            rg -n 'modules//resources/' templates/envcommon/ || true
+            exit 1
+          fi
+
+      - name: SRE checks (fast)
+        run: ./scripts/checks_sre.sh --fast
+
+  format:
+    name: Format checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Terraform fmt (modules)
+        run: terraform fmt -check -recursive modules/
+
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v3
+        with:
+          terragrunt-version: 0.99.1
+
+      - name: Terragrunt HCL format check
+        run: terragrunt hcl format --check
+
+  fixture-validate:
+    name: Scaffold fixture + terragrunt init/validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Setup Terragrunt
+        uses: autero1/action-terragrunt@v3
+        with:
+          terragrunt-version: 0.99.1
+
+      - name: Scaffold fixture
+        run: |
+          rm -rf live/_envcommon live/ci-test || true
+          ./scripts/create_environment.sh ci-test --force
+          ./scripts/create_environment_datacenter.sh ci-test datacenter-01 --force
+          ./scripts/create_environment_stack.sh ci-test datacenter-01 vm-fixture vm --force
+          ./scripts/create_environment_stack.sh ci-test datacenter-01 ct-fixture ct --force
+
+      - name: Init + validate VM
+        working-directory: live/ci-test/datacenter-01/vm-fixture
+        run: |
+          terragrunt init -upgrade -input=false
+          terragrunt validate
+
+      - name: Init + validate CT
+        working-directory: live/ci-test/datacenter-01/ct-fixture
+        run: |
+          terragrunt init -upgrade -input=false
+          terragrunt validate
+
+      - name: Ensure tracked files unchanged
+        run: |
+          git diff --exit-code
+          git status --porcelain --untracked-files=no
