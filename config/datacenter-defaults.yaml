@@ -1,0 +1,17 @@
+# Default datacenter values for scaffold scripts. Adjust them to match your Proxmox setup.
+# nodes: PVE node hostname(s). default_node: fallback when target_nodes is empty.
+# default_pool: null if it does not exist, or the pool name (for example example-pool).
+# default_storage: storage that supports VM images (Datacenter -> Storage). For example: local-lvm, local-zfs.
+#    "local" only supports ISOs, not VM disks.
+proxmox:
+  nodes:
+    - pve01
+  default_node: pve01
+  default_bridge: vmbr0
+  default_pool: null
+  default_storage: local-lvm
+  default_vm_template: ubuntu-2404-cloudinit
+  default_template_vm_id: 9000
+  default_vm_id_base: 4000
+  default_ct_template: null
+  default_ct_id_base: 200
