@@ -1,0 +1,76 @@
+# Terragrunt / Terraform files
+.terragrunt-cache/
+.terraform/
+*.tfstate
+*.tfstate.*
+# --- Terraform / Terragrunt (state and cache) ---
+**/.terragrunt-cache/
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/state/
+**/*.lock.info
+**/.terraform.tfstate.lock.info
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Runtime / caches (do not version)
+live/**/.terraform/
+live/**/.terragrunt-cache/
+live/**/.terraform.lock.hcl
+live/**/terraform.tfstate
+live/**/terraform.tfstate.*
+live/**/tfplan*
+live/**/providers.tf
+live/**/remote_state.tf
+live/**/crash.log
+live/**/crash.*.log
+
+# Regenerable artifacts / fixtures
+live/_envcommon/
+live/sre-check/
+live/ci-test/
+
+# Terraform CLI / provider cache (bootstrap scripts)
+.terraform.d/
+
+# Scripts: evidence and logs (validate_fresh, bootstrap_provider_mirror, net_diagnose)
+evidence/
+logs/
+
+# Sensitive / local tfvars
+*.auto.tfvars
+*secrets*.tfvars
+*secret*.tfvars
+terraform.tfvars
+terraform.tfvars.json
+
+# Environment variables and local files
+.env
+.env.*
+*.local
+# .envrc usually contains secrets (PM_PASSWORD, etc.) — do not version
+.envrc
+.outputs/
+.directory
+
+# direnv
+.direnv/
+
+# Temporary / backup artifacts
+*.bak
+*.bak.*
+*.tmp
+*.tmp.*
+*.out
+
+# Documentation: docs/ is versioned (reference documentation). Do not ignore it.
+
+# Editors / operating system
+.vscode/
+.idea/
+.DS_Store
